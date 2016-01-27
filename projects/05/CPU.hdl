@@ -40,39 +40,52 @@ CHIP CPU {
 
     PARTS:
 
-    //First, not instruc_15
+    //Not instruc_15
     Not (in=instruction[15], out=notIn15);
-    Mux16 (a=outM, b=instruction, sel=notIn15, out=outMuxPreA);
+    Mux16 (a=outM2, b=instruction, sel=notIn15, out=outMuxPreA);
 
-    Register (in=outMuxPreA, sel=instruction[5], out=addressM);
 
-    Mux16 (a=addressM, b=inM, sel=instruction[12], out=outMuxPreALU);
+    Or (a=notIn15, b=instruction[5], out=loadA);
+    //Register A
+    ARegister (in=outMuxPreA, load=loadA, out=addressM16, out[0..14]=addressM);
+
+    Mux16 (a=addressM16, b=inM, sel=instruction[12], out=outMuxPreALU);
 
     //Need to build the C for Register D
     And (a=instruction[15], b=instruction[4], out=preRegD);
-    Register (in=outM, sel=preRegD, out=outRD);
+    //Register D
+    DRegister (in=outM2, load=preRegD, out=outRD);
 
     //Process the ALU with c1..c6
     ALU (x=outRD, y=outMuxPreALU, zx=instruction[11], nx=instruction[10],
       zy=instruction[9], ny=instruction[8], f=instruction[7], no=instruction[6],
-       out=outM, zr=zr, ng=ng);
+       out=outM, zr=zr, ng=ng, out=outM2);
 
     //When do we load? When there is a jump
     // Jump case 1: instr_2 & instr_15 & ng
-    And (a=instruction[2], b=instruction=[15], out=and215);
+    And (a=instruction[2], b=instruction[15], out=and215);
     And (a=and215, b=ng, out=jumpcase1);
 
     //Jump Case 2: inst_15 & inst_1 & zr
-    And (a=instruction[1], b=instruction=[15], out=and115);
+    And (a=instruction[1], b=instruction[15], out=and115);
     And (a=and115, b=zr, out=jumpcase2);
 
     //Jum Case 3: inst_15 & inst_0 & !ng & !zr
     Not (in=ng, out=notNg);
     Not (in=zr, out=notZr);
-    
+    // ANDem all!
+    And (a=instruction[0], b=instruction[15], out=and015);
+    And (a=notNg, b=notZr, out=andNotNgZr);
+    And (a=and015, b=andNotNgZr, out=jumpcase3);
+
+    //And now we OR the 3 jump cases
+    Or (a=jumpcase1, b=jumpcase2, out=jumpcase12);
+    Or (a=jumpcase12, b=jumpcase3, out=load);
 
     // You can always Increment
-    PC (in=addressM, load=load, inc=1, reset=reset, out=pc);
-
+    Xor (a=reset, b=reset, out=preinc);
+    Not (in=preinc, out=inc);
+    PC (in=addressM16, load=load, inc=inc, reset=reset, out[0..14]=pc);
+    And (a=instruction[3], b=instruction[15], out=writeM);
 
 }
