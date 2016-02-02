@@ -39,9 +39,11 @@ def symbol (line):
     Should be called only when command_type()is A_COMMAND or L_COMMAND
     '''
     if line[0] == '@':
+        #print (line)
         return line[1:]
     else:
-        return line[1:-1]
+        #print (line[1:-2])
+        return line[1:-2]
 
 def dest (line):
     if '=' not in line:
@@ -76,11 +78,11 @@ def populate_table(filename):
     First read of the file. Creates new variables for the Hash Table
     '''
     n = 0
-    with open (fn, 'r') as fi:
+    with open (filename, 'r') as fi:
         for line in fi:
             c_type= command_type(line)
             if c_type=='L':
-                table[symbol(line)] = n + 1
+                table[symbol(line)] = n
             else:
                 n+=1
 
@@ -92,11 +94,13 @@ def check_symbol(symb):
     if symb.isdigit():
         return symb
     else:
-        if symb in table.keys:
+        if symb in table.keys():
             return table[symb]
         else:
-            n_ram +=1
+            global n_ram
+            n_ram = n_ram + 1
             table[symb] = n_ram
+            #print (n_ram, table)
             return n_ram
 
 
@@ -136,7 +140,7 @@ def main(filename):
             else:
                 #L case
                 continue
-
+        #print (table)
         fo.close()
 
 if __name__ == '__main__':
