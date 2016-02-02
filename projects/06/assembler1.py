@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 
+import sys
 from rws import remove
 
 djump = {None:"000", "JGT":"001", "JEQ":"010", "JGE":"011", "JLT":"100",
@@ -14,8 +15,10 @@ dcomp = {"0":"101010","1":"111111","-1":"111010","D":"001100","A":"110000",
         "D-M":"010011","D+M":"000010","M-1":"110010","M+1":"110111",
         "-M":"110011","!M":"110001","M":"110000"}
 
-
-
+table ={"SP":"0", "LCL":"1","ARG":"2","THIS":"3","THAT":"4","R0":"0","R1":"1",
+        "R2":"2","R3":"3","R4":"4","R5":"5","R6":"6","R7":"7","R8":"8",
+        "R9":"9","R10":"10","R11":"11","R12":"12","R13":"13","R14":"14",
+        "R15":"15","SCREEN":"16384","KBD":"24576"}
 
 def command_type (line):
     '''
@@ -44,7 +47,7 @@ def dest (line):
     else:
         return line[:line.index('=')]
 
-def comp ():
+def comp (line):
     if '=' in line:
         return line[line.index('=')+1:]
     elif ';' in line:
@@ -53,17 +56,18 @@ def comp ():
         print ("Error with the format of the line: ", line)
         sys.exit()
 
-def jump ():
+def jump (line):
     if ';' not in line:
         return None
     else:
-        return line[line.index('=')+1:]
+        return line[line.index(';')+1:]
 
-def bin_dest(nm):
-
-def bin_comp(nm):
-
-def bin_jump(nm):
+def defa(nm):
+    a1 = ["D|M","D&M","M-D","D-M","D+M","M-1","M+1","-M","!M","M"]
+    if nm in a1:
+        return "1"
+    else:
+        return "0"
 
 def main(filename):
     fn = filename[:-3]+'out'
@@ -74,20 +78,30 @@ def main(filename):
 
         for line in fi:
 
+            line = line.split('\n', 1)[0]
+
             c_type = command_type(line)
 
-            if (c_type=='A' or c_type=='L'):
-
+            if c_type=='A':
                 c_symbol = symbol(line)
-
-            else:
-
+                dataA = '0'+bin(int(c_symbol))[2:].zfill(15)
+                fo.writelines(dataA+'\n')
+            elif c_type=='C':
                 line_dest = dest(line)
                 line_comp = comp(line)
                 line_jump = jump(line)
 
+                bin_dest = ddest[line_dest]
+                bin_comp = dcomp[line_comp]
+                bin_jump = djump[line_jump]
+                a = defa(line_comp)
+                dataC = '111'+a+bin_comp+bin_dest+bin_jump
 
+                fo.writelines(dataC+'\n')
 
+            else:
+                #L case
+                continue
 
         fo.close()
 
@@ -97,6 +111,6 @@ if __name__ == '__main__':
         print ('Usage: python rws.py inputfile.asm')
     elif len(sys.argv) == 2:
         remove(sys.argv[1], True)
-        main()
+        main(sys.argv[1])
     else:
         print ('Usage: python rws.py inputfile.asm')
