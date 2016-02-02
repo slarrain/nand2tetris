@@ -20,6 +20,8 @@ table ={"SP":"0", "LCL":"1","ARG":"2","THIS":"3","THAT":"4","R0":"0","R1":"1",
         "R9":"9","R10":"10","R11":"11","R12":"12","R13":"13","R14":"14",
         "R15":"15","SCREEN":"16384","KBD":"24576"}
 
+n_ram = 15
+
 def command_type (line):
     '''
     Return the command type of a line: A, C or L
@@ -69,8 +71,39 @@ def defa(nm):
     else:
         return "0"
 
+def populate_table(filename):
+    '''
+    First read of the file. Creates new variables for the Hash Table
+    '''
+    n = 0
+    with open (fn, 'r') as fi:
+        for line in fi:
+            c_type= command_type(line)
+            if c_type=='L':
+                table[symbol(line)] = n + 1
+            else:
+                n+=1
+
+def check_symbol(symb):
+    '''
+    Checks if the xxx part of @xxx is a symbol and if it is, check if its
+    in the table already or not
+    '''
+    if symb.isdigit():
+        return symb
+    else:
+        if symb in table.keys:
+            return table[symb]
+        else:
+            n_ram +=1
+            table[symb] = n_ram
+            return n_ram
+
+
 def main(filename):
     fn = filename[:-3]+'out'
+
+    populate_table(fn)
 
     with open (fn, 'r') as fi:
 
@@ -84,7 +117,8 @@ def main(filename):
 
             if c_type=='A':
                 c_symbol = symbol(line)
-                dataA = '0'+bin(int(c_symbol))[2:].zfill(15)
+                a_symbol = check_symbol(c_symbol)
+                dataA = '0'+bin(int(a_symbol))[2:].zfill(15)
                 fo.writelines(dataA+'\n')
             elif c_type=='C':
                 line_dest = dest(line)
