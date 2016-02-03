@@ -1,5 +1,10 @@
 #!/usr/bin/env python3
 
+#
+#   Santiago Larrain
+#   slarrain@uchicago.edu
+#
+
 import sys
 from rws import remove
 
@@ -46,12 +51,18 @@ def symbol (line):
         return line[1:-2]
 
 def dest (line):
+    '''
+    Returns the "dest" mnemonic
+    '''
     if '=' not in line:
         return None
     else:
         return line[:line.index('=')]
 
 def comp (line):
+    '''
+    Returns the "comp" mnemonic
+    '''
     if '=' in line:
         return line[line.index('=')+1:]
     elif ';' in line:
@@ -61,12 +72,18 @@ def comp (line):
         sys.exit()
 
 def jump (line):
+    '''
+    Returns the "jump" mnemonic
+    '''
     if ';' not in line:
         return None
     else:
         return line[line.index(';')+1:]
 
 def defa(nm):
+    '''
+    Should 'a' be 1 or 0 ?
+    '''
     a1 = ["D|M","D&M","M-D","D-M","D+M","M-1","M+1","-M","!M","M"]
     if nm in a1:
         return "1"
@@ -100,11 +117,14 @@ def check_symbol(symb):
             global n_ram
             n_ram = n_ram + 1
             table[symb] = n_ram
-            #print (n_ram, table)
             return n_ram
 
 
 def main(filename):
+    '''
+    Main function. Goes through every line and writes the binary code line
+    on the hack file
+    '''
     fn = filename[:-3]+'out'
 
     populate_table(fn)
@@ -139,16 +159,16 @@ def main(filename):
 
             else:
                 #L case
+                #we skip this line
                 continue
-        #print (table)
         fo.close()
 
 if __name__ == '__main__':
 
     if len(sys.argv) == 1:
-        print ('Usage: python rws.py inputfile.asm')
+        print ('Usage: python assembler.py inputfile.asm')
     elif len(sys.argv) == 2:
         remove(sys.argv[1], True)
         main(sys.argv[1])
     else:
-        print ('Usage: python rws.py inputfile.asm')
+        print ('Usage: python assembler.py inputfile.asm')
