@@ -20,7 +20,7 @@ def command_type(line):
         return "C_"+com.upper()
 
 def arg1(line):
-    print (line)
+    #print (line)
     if command_type(line)=="C_RETURN":
         print ("Error. C_RETURN")
     if command_type(line)=="C_ARITHMETIC":
@@ -59,10 +59,13 @@ def write_arithmetic (command):
     n+=1
     return instructions[command]
 
+def static_filename(filename):
+    return filename.split('/')[-1][:-2]
+
 def write_push_pop(command, segment, index, filename):
 
     segs = {'local':'LCL', 'argument':'ARG', 'this':'THIS', 'that':'THAT'}
-
+    filename = static_filename(filename)
     if command == 'C_PUSH':
         push_end = ['@SP', 'A=M', 'M=D', '@SP', 'M=M+1']
         if segment=='constant':
