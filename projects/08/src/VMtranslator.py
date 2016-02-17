@@ -10,6 +10,7 @@ import sys
 
 arith = ['add','sub','neg','eq','gt','lt','and','or','not']
 n = 0
+line_counter = 0
 
 def command_type(line):
     '''
@@ -131,69 +132,85 @@ def write_push_pop(command, segment, index, filename):
 
         return rv
 
-def write_label (label):
-    rv = ['('+label+')']
+def write_label (func_name, label):
+    rv = ['('+func_name+'$'+label+')']
     return rv
 
-def write_goto(label):
-    rv = ["@"+label, "0;JMP"]
+def write_goto(func_name, label):
+    rv = ["@"+func_name+'$'+label, "0;JMP"]
     return rv
 
-def write_if(label):
-    rv = ['@SP', 'AM=M-1', 'D=M', '@'+label, 'D;JNE']
+def write_if(func_name, label):
+    rv = ['@SP', 'AM=M-1', 'D=M', '@'+func_name+'$'+label, 'D;JNE']
     return rv
 
 def write_call (function_name, num_args):
-    return_adress = function_name+'$'+
-    c0 = ['@SP', ]
+    global line_counter
+    return_adress = function_name+'$'+str(line_counter)
+    c0 = ['@'+return_adress, 'D=A', '@SP', 'A=M', 'M=D', '@SP', 'M=M+1']
     c1 = write_push_pop ('C_PUSH', 'local', '0', 'irrelevant')
     c2 = write_push_pop ('C_PUSH', 'argument', '0', 'irrelevant')
     c3 = write_push_pop ('C_PUSH', 'this', '0', 'irrelevant')
     c4 = write_push_pop ('C_PUSH', 'that', '0', 'irrelevant')
-    c5 = ['@5','D=A','@'+num_args,'D=D+A','@SP','D=M-D','@ARG','M=D']
+    x = num_args+5
+    c5 = ['@'+str(x),'D=A','@SP','D=M-D','@ARG','M=D']
+    #c5 = ['@5','D=A','@'+num_args,'D=D+A','@SP','D=M-D','@ARG','M=D']
     c6 = ['@SP', 'D=M', '@LCL', 'M=D']
-    c7 = write_goto(function_name)
+    c7 = ["@"+function_name, "0;JMP"]
     c8 = ['('+return_adress+')']
     rv = c0+c1+c2+c3+c4+c4+c5+c6+c7+c8
+    return rv
 
 def write_function (function_name, num_locals):
     f0 = ['('+function_name+')']
-    f1 = write_push_pop ('C_FUNCTION', 'constant', 0, 'irrelevant')
+    f1 = write_push_pop ('C_PUSH', 'constant', 0, 'irrelevant')
     rv = f0+f1*num_locals
     return rv
 
 def write_return():
 
-    r0 = ['@LCL', 'D=M', '@FRAME', 'M=D']
-    r1 = ['@5','D=A','@FRAME','A=M-D','D=M','@RET','M=D']
-    r2 = ['@SP', 'D=M', '@ARG', 'M=D']
+    r0 = ['@LCL', 'D=M', '@R13', 'M=D']
+    r1 = ['@5','D=A','@R13','A=M-D','D=M','@R14','M=D']
+    r2 = ['@SP','AM=M-1','D=M','@ARG','A=M','M=D']
     r3 = ['@ARG', 'D=M+1', '@SP', 'M=D']
-    r4 = ['@1','D=A','@FRAME','A=M-D','D=M','@THAT','M=D']
-    r5 = ['@2','D=A','@FRAME','A=M-D','D=M','@THIS','M=D']
-    r6 = ['@3','D=A','@FRAME','A=M-D','D=M','@ARG','M=D']
-    r7 = ['@4','D=A','@FRAME','A=M-D','D=M','@LCL','M=D']
-    r8 = ['@RET','0;JMP']
+    r4 = ['@1','D=A','@R13','A=M-D','D=M','@THAT','M=D']
+    r5 = ['@2','D=A','@R13','A=M-D','D=M','@THIS','M=D']
+    r6 = ['@3','D=A','@R13','A=M-D','D=M','@ARG','M=D']
+    r7 = ['@4','D=A','@R13','A=M-D','D=M','@LCL','M=D']
+    r8 = ['@R14','A=M', '0;JMP']
     rv = r0+r1+r2+r3+r4+r5+r6+r7+r8
+    #rv = r0+r1+r2+r3+r4+r5+r6+r7
     return rv
 
 def bootstrap():
     b0 = ['@256', 'D=A', '@SP', 'M=D']
-    b1 = []
+    b1 = write_call('Sys.Init', 0)
+    rv = b0+b1
+    return rv
 
 
-def main(filenames):
+def main(filenames, name):
     '''
     It executes the program.
     Input: a list of filenames
     '''
+    global line_counter
+    if len(filenames)==1:
+        fn = filenames[0][:-3]
+    else:
+        fn = name + name.split('/')[-1]
 
-    fo = open (filenames[0][:-2]+'asm', 'w')
+    fo = open (fn+'.asm', 'w')
+
+    #Bootstrap
+    initl = bootstrap()
+    fo.writelines("%s\n" % l for l in initl)
 
     #list of filenames with length = 1 or more
     for filename in filenames:
 
         with open (filename, 'r') as fi:
-            line_counter = 0
+
             for line in fi:
                 line_counter+=1
 
@@ -221,13 +238,24 @@ def main(filenames):
 
                     #Program flow
                     elif line_command=='C_LABEL':
-                        wl = write_label (line_arg1)
+                        wl = write_label (func_name, line_arg1)
                         fo.writelines("%s\n" % l for l in wl)
                     elif line_command=='C_GOTO':
-                        wl = write_goto (line_arg1)
+                        wl = write_goto (func_name, line_arg1)
                         fo.writelines("%s\n" % l for l in wl)
                     elif line_command=='C_IF':
-                        wl = write_if (line_arg1)
+                        wl = write_if (func_name, line_arg1)
+                        fo.writelines("%s\n" % l for l in wl)
+
+                    elif line_command=='C_RETURN':
+                        wl = write_return()
+                        fo.writelines("%s\n" % l for l in wl)
+                    elif line_command=='C_FUNCTION':
+                        func_name = static_filename(filename)+'$'+line_arg1
+                        wl = write_function(func_name, line_arg2)
+                        fo.writelines("%s\n" % l for l in wl)
+                    elif line_command=='C_CALL':
+                        wl = write_call(func_name, line_arg2)
                         fo.writelines("%s\n" % l for l in wl)
 
 
@@ -246,7 +274,7 @@ if __name__ == '__main__':
             filenames = [name]
         else:
             filenames = glob.glob(name+'*.vm')
-        main(filenames)
+        main(filenames, name)
 
 
     
