@@ -146,15 +146,16 @@ def write_if(func_name, label):
 
 def write_call (function_name, num_args):
     global line_counter
-    return_adress = function_name+'$'+str(line_counter)
+    #return_adress = function_name+'$'+str(line_counter)
+    return_adress = 'ReturnAddress'+str(line_counter)
     c0 = ['@'+return_adress, 'D=A', '@SP', 'A=M', 'M=D', '@SP', 'M=M+1']
-    c1 = write_push_pop ('C_PUSH', 'local', '0', 'irrelevant')
-    c2 = write_push_pop ('C_PUSH', 'argument', '0', 'irrelevant')
-    c3 = write_push_pop ('C_PUSH', 'this', '0', 'irrelevant')
-    c4 = write_push_pop ('C_PUSH', 'that', '0', 'irrelevant')
-    x = num_args+5
-    c5 = ['@'+str(x),'D=A','@SP','D=M-D','@ARG','M=D']
-    #c5 = ['@5','D=A','@'+num_args,'D=D+A','@SP','D=M-D','@ARG','M=D']
+    c1 = write_push_pop ('C_PUSH', 'local', 0, 'irrelevant')
+    c2 = write_push_pop ('C_PUSH', 'argument', 0, 'irrelevant')
+    c3 = write_push_pop ('C_PUSH', 'this', 0, 'irrelevant')
+    c4 = write_push_pop ('C_PUSH', 'that', 0, 'irrelevant')
+    #x = num_args+5
+    #c5 = ['@'+str(x),'D=A','@SP','D=M-D','@ARG','M=D']
+    c5 = ['@5','D=A','@'+str(num_args),'D=D+A','@SP','D=M-D','@ARG','M=D']
     c6 = ['@SP', 'D=M', '@LCL', 'M=D']
     c7 = ["@"+function_name, "0;JMP"]
     c8 = ['('+return_adress+')']
@@ -198,9 +199,10 @@ def main(filenames, name):
     if len(filenames)==1:
         fn = filenames[0][:-3]
     else:
-        fn = name + name.split('/')[-1]
-
-    fo = open (fn+'.asm', 'w')
+        fn = name + name.split('/')[-2]+'.asm'
+    print (filenames)
+    print (fn)
+    fo = open (fn, 'w')
 
     #Bootstrap
     initl = bootstrap()
