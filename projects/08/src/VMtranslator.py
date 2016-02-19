@@ -133,33 +133,39 @@ def write_push_pop(command, segment, index, filename):
         return rv
 
 def write_label (func_name, label):
-    #rv = ['('+func_name+'$'+label+')']
-    rv = ['('+label+')']
+    '''
+    Writes a label
+    '''
+    rv = ['('+func_name+'$'+label+')']
     return rv
 
 def write_goto(func_name, label):
-    #rv = ["@"+func_name+'$'+label, "0;JMP"]
-    rv = ["@"+label, "0;JMP"]
+    '''
+    Writes a Goto
+    '''
+    rv = ["@"+func_name+'$'+label, "0;JMP"]
     return rv
 
 def write_if(func_name, label):
-    #rv = ['@SP', 'AM=M-1', 'D=M', '@'+func_name+'$'+label, 'D;JNE']
-    rv = ['@SP', 'AM=M-1', 'D=M', '@'+label, 'D;JNE']
+    '''
+    Writes an if-goto
+    '''
+    rv = ['@SP', 'AM=M-1', 'D=M', '@'+func_name+'$'+label, 'D;JNE']
     return rv
 
 def write_call (function_name, num_args):
+    '''
+    Writes a call to a function
+    '''
     global line_counter
-    #return_adress = function_name+'$'+str(line_counter)
     return_adress = 'ReturnAddress'+str(line_counter)
     c0 = ['@'+return_adress, 'D=A', '@SP', 'A=M', 'M=D', '@SP', 'M=M+1']
-    c1 = write_push_pop ('C_PUSH', 'local', 0, 'irrelevant')
-    c2 = write_push_pop ('C_PUSH', 'argument', 0, 'irrelevant')
-    c3 = write_push_pop ('C_PUSH', 'this', 0, 'irrelevant')
-    c4 = write_push_pop ('C_PUSH', 'that', 0, 'irrelevant')
-    #x = num_args+5
-    #c5 = ['@'+str(x),'D=A','@SP','D=M-D','@ARG','M=D']
-    #c5 = ['@5','D=A','@'+str(num_args),'D=D+A','@SP','D=M-D','@ARG','M=D']
-    c5 = ['@SP', 'D=M', 'D=D-A', '@'+str(num_args), 'D=D-A', '@ARG', 'M=D']
+    c1 = ['@LCL','D=M','@SP','A=M','M=D','@SP','M=M+1']
+    c2 = ['@ARG','D=M','@SP','A=M','M=D','@SP','M=M+1']
+    c3 = ['@THIS','D=M','@SP','A=M','M=D','@SP','M=M+1']
+    c4 = ['@THAT','D=M','@SP','A=M','M=D','@SP','M=M+1']
+    x = int(num_args)+5
+    c5 = ['@'+str(x),'D=A','@SP','D=M-D','@ARG','M=D']
     c6 = ['@SP', 'D=M', '@LCL', 'M=D']
     c7 = ["@"+function_name, "0;JMP"]
     c8 = ['('+return_adress+')']
@@ -167,32 +173,28 @@ def write_call (function_name, num_args):
     return rv
 
 def write_function (function_name, num_locals):
+    '''
+    Writes a function
+    '''
     f0 = ['('+function_name+')']
     f1 = write_push_pop ('C_PUSH', 'constant', 0, 'irrelevant')
-    rv = f0+f1*num_locals
-    print (rv)
+    rv = f0+f1*int(num_locals)
     return rv
 
 def write_return():
-
-    r0 = ['@LCL', 'D=M', '@R13', 'M=D']
-    r1 = ['@R13', 'D=M','@5', 'A=D-A', 'D=M', '@R14', 'M=D']
-    #r1 = ['@5','D=A','@R13','A=M-D','D=M','@R14','M=D']
-    #r2 = ['@SP','AM=M-1','D=M','@ARG','A=M','M=D']
-    #r2 = write_push_pop ('C_POP', 'argument', 0, 'irrelevant')
-    r2 = ['@ARG','D=M','@R15','M=D','@SP','A=M','D=M','@R15','A=M','M=D']
+    '''
+    Writes the return
+    '''
+    r0 = ['@LCL', 'D=M', '@FRAME', 'M=D']
+    r1 = ['@FRAME', 'D=M','@5', 'A=D-A', 'D=M', '@R14', 'M=D']
+    r2 = ['@SP','AM=M-1','D=M','@ARG','A=M','M=D']
     r3 = ['@ARG', 'D=M+1', '@SP', 'M=D']
-    #r4 = ['@1','D=A','@R13','A=M-D','D=M','@THAT','M=D']
-    #r5 = ['@2','D=A','@R13','A=M-D','D=M','@THIS','M=D']
-    #r6 = ['@3','D=A','@R13','A=M-D','D=M','@ARG','M=D']
-    #r7 = ['@4','D=A','@R13','A=M-D','D=M','@LCL','M=D']
-    r4 = ['@R13','D=M','D=D-1','@R13','M=D','A=D','D=M','@THAT','M=D']
-    r5 = ['@R13','D=M','D=D-1','@R13','M=D','A=D','D=M','@THIS','M=D']
-    r6 = ['@R13','D=M','D=D-1','@R13','M=D','A=D','D=M','@ARG','M=D']
-    r7 = ['@R13','D=M','D=D-1','@R13','M=D','A=D','D=M','@LCL','M=D']
+    r4 = ['@1','D=A','@FRAME','A=M-D','D=M','@THAT','M=D']
+    r5 = ['@2','D=A','@FRAME','A=M-D','D=M','@THIS','M=D']
+    r6 = ['@3','D=A','@FRAME','A=M-D','D=M','@ARG','M=D']
+    r7 = ['@4','D=A','@FRAME','A=M-D','D=M','@LCL','M=D']
     r8 = ['@R14','A=M', '0;JMP']
     rv = r0+r1+r2+r3+r4+r5+r6+r7+r8
-    #rv = r0+r1+r2+r3+r4+r5+r6+r7
     return rv
 
 def bootstrap():
@@ -209,16 +211,14 @@ def main(filenames, name):
     '''
     global line_counter
     if len(filenames)==1:
-        fn = filenames[0][:-3]
+        fn = filenames[0][:-3]+'.asm'
     else:
         fn = name + name.split('/')[-2]+'.asm'
-    print (filenames)
-    print (fn)
+
     fo = open (fn, 'w')
 
     #Bootstrap
     initl = bootstrap()
-    #print (initl)
     fo.writelines("%s\n" % l for l in initl)
 
     #list of filenames with length = 1 or more
@@ -276,8 +276,6 @@ def main(filenames, name):
                         wl = write_call(line_arg1, line_arg2)
                         fo.writelines("%s\n" % l for l in wl)
 
-                    print (line_command, line_arg1, line_arg2, func_name)
-
     fo.close()
 
 
@@ -286,7 +284,7 @@ def main(filenames, name):
 if __name__ == '__main__':
 
     if len(sys.argv) != 2:
-        print ('Usage: python3 VMtranslator.py inputfile.vm')
+        print ('Usage: python3 VMtranslator.py [inputfile.vm|/directory/')
     elif len(sys.argv) == 2:
         name = sys.argv[1]
         if name.endswith('.vm'):
