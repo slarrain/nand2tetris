@@ -17,16 +17,84 @@ class SquareGame {
     // The square
     field Square square;
 
+		field int level;
+
     // The square's movement direction
     field int direction; // 0=none,1=up,2=down,3=left,4=right
 
     /** Constructs a new Square Game. */
     constructor SquareGame new() {
-        let square = Square.new(0, 0, 30);
+        let square = Square.new(0, 1, 5);
         let direction = 0;
 
+				let level = 0;
+				do Screen.setColor(true);
+				do Screen.drawCircle(425, 250, 4);
         return this;
     }
+
+		method void lines (boolean draw) {
+
+				do Screen.setColor(draw);
+				do line_level();
+				return;
+		}
+
+		method void line_level () {
+			if (level = 1) {
+				do Screen.drawLine(0,0, 450, 0);
+        do Screen.drawLine(0,30, 400, 30);
+        do Screen.drawLine(450,0, 450, 254);
+        do Screen.drawLine(400,30, 400, 254);
+
+			}
+
+			do Screen.drawLine(0,0, 450, 0);
+			do Screen.drawLine(450,0, 450, 130);
+			do Screen.drawLine(450,130, 130, 130);
+			do Screen.drawLine(130,130, 130, 160);
+			do Screen.drawLine(130,160, 320, 160);
+			do Screen.drawLine(320,160, 320, 254);
+			do Screen.drawLine(320,255, 0, 255);
+
+      do Screen.drawLine(0,30, 400, 30);
+      do Screen.drawLine(400,30, 400, 100);
+			do Screen.drawLine(400,100, 100, 100);
+			do Screen.drawLine(100,100, 100, 180);
+			do Screen.drawLine(100,180, 300, 180);
+			do Screen.drawLine(300,180, 300, 240);
+			do Screen.drawLine(300,240, 0, 240);
+			return;
+		}
+
+		method void circle() {
+			if (level = 1) {
+				do Screen.setColor(true);
+				do Screen.drawCircle(425, 250, 4);
+			}
+			return;
+		}
+
+/*
+		method boolean array_positions () {
+			field int x1, y1, x2, y2;
+			field Array position;
+			let x1 = square.x;
+			let y1 = square.y;
+			let x2 = x1 + square.size;
+			let y2 = y1 + square.size;
+			let position = Array.new()
+		}
+
+*/
+
+
+
+
+
+
+
+
 
     /** Deallocates the object's memory. */
     method void dispose() {
@@ -42,6 +110,8 @@ class SquareGame {
         var boolean exit;
 
         let exit = false;
+				do lines(true);
+				do circle();
 
         while (~exit) {
             // waits for a key to be pressed.
@@ -100,4 +170,5 @@ class SquareGame {
         do Sys.wait(5); // Delays the next movement.
         return;
     }
+
 }
