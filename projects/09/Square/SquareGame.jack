@@ -17,37 +17,22 @@ class SquareGame {
     // The square
     field Square square;
 
-		field int level;
 
     // The square's movement direction
     field int direction; // 0=none,1=up,2=down,3=left,4=right
 
     /** Constructs a new Square Game. */
     constructor SquareGame new() {
-        let square = Square.new(0, 1, 5);
+        let square = Square.new(0, 13, 5);
         let direction = 0;
-
-				let level = 0;
 				do Screen.setColor(true);
-				do Screen.drawCircle(425, 250, 4);
+				do Screen.drawCircle(6, 248, 5);
         return this;
     }
 
-		method void lines (boolean draw) {
+		method void lines () {
 
-				do Screen.setColor(draw);
-				do line_level();
-				return;
-		}
-
-		method void line_level () {
-			if (level = 1) {
-				do Screen.drawLine(0,0, 450, 0);
-        do Screen.drawLine(0,30, 400, 30);
-        do Screen.drawLine(450,0, 450, 254);
-        do Screen.drawLine(400,30, 400, 254);
-
-			}
+			do Screen.setColor(true);
 
 			do Screen.drawLine(0,0, 450, 0);
 			do Screen.drawLine(450,0, 450, 130);
@@ -57,8 +42,8 @@ class SquareGame {
 			do Screen.drawLine(320,160, 320, 254);
 			do Screen.drawLine(320,255, 0, 255);
 
-      			do Screen.drawLine(0,30, 400, 30);
-      			do Screen.drawLine(400,30, 400, 100);
+      do Screen.drawLine(0,30, 400, 30);
+      do Screen.drawLine(400,30, 400, 100);
 			do Screen.drawLine(400,100, 100, 100);
 			do Screen.drawLine(100,100, 100, 180);
 			do Screen.drawLine(100,180, 300, 180);
@@ -68,56 +53,12 @@ class SquareGame {
 		}
 
 		method void circle() {
-			if (level = 1) {
+
 				do Screen.setColor(true);
-				do Screen.drawCircle(425, 250, 4);
-			}
+				do Screen.drawCircle(1, 245, 5);
+
 			return;
 		}
-
-
-		method void check () {
-			var int x1, y1, x2, y2;
-			let x1 = square.getX();
-			let y1 = square.getY();
-			let x2 = x1 + square.getSize();
-			let y2 = y1 + square.getSize();
-
-		  do check_up(x1, y1);
-		  //do check_down();
-		  //do check_left();
-		  //do check_right();
-		return;
-		}
-
-		method void check_up(int x1, int y1) {
-		  //| (y1=180 & x1>100) | (y1=240 & x1<300)   & x1<400
-		  do Output.printInt(x1);
-		  do Output.printInt(y1);
-		  if (	(y1=100 ) ) {
-		    //let up = true;
-		    do game_over();
-
-		  }
-						   return;
-		}
-
-
-		method void game_over () {
-			do Output.printString("You died");
-	    	do Sys.halt();
-		  return;
-		}
-
-
-
-
-
-
-
-
-
-
 
     /** Deallocates the object's memory. */
     method void dispose() {
@@ -133,8 +74,10 @@ class SquareGame {
         var boolean exit;
 
         let exit = false;
-				do lines(true);
-				do circle();
+
+				//do circle();
+
+				do lines();
 
         while (~exit) {
             // waits for a key to be pressed.
@@ -169,17 +112,20 @@ class SquareGame {
             while (~(key = 0)) {
                 let key = Keyboard.keyPressed();
                 do moveSquare();
-	     do check();
+	     					//do square.check();
             }
         }
-            
+
         return;
 	}
 
     /** Moves the square by 2 pixels in the current direction. */
     method void moveSquare() {
+
+			do square.check();
         if (direction = 1) {
             do square.moveUp();
+
         }
         if (direction = 2) {
             do square.moveDown();

@@ -5,7 +5,7 @@
 
 /**
  * Implements a graphic square. A graphic square has a screen location
- * and a size. It also has methods for drawing, erasing, moving on the 
+ * and a size. It also has methods for drawing, erasing, moving on the
  * screen, and changing its size.
  */
 class Square {
@@ -116,14 +116,83 @@ class Square {
         }
         return;
     }
-	      method int getX(){
-	        return x;
-	      }
-	       method int getY(){
-	        return y;
-	      }
-	       method int getSize(){
-	        return size;
-	      }
 
+
+			method void check () {
+			var int x1, y1, x2, y2;
+			let x1 = x;
+			let y1 = y;
+			let x2 = x1 + size;
+			let y2 = y1 + size;
+
+		  do check_up(x1, y1);
+		  do check_down(x2, y2);
+		  do check_left(x1, y1);
+		  do check_right(x2, y2);
+			do check_win(x1, y1);
+		return;
+		}
+
+		method void check_up(int x1, int y1) {
+		  if ( ((y1=100) & (x1<400)) | ((y1=160) & (x1>130)) | ((y1=240) & (x1<300))){
+		    do game_over();
+		  }
+			return;
+		}
+		method void check_down(int x2, int y2) {
+		  if ( ((y2=30) & (x2<400)) | ((y2=130) & (x2>130)) | ((y2=180) & (x2<300))){
+		    do game_over();
+		  }
+			return;
+		}
+
+		method void check_left(int x1, int y1) {
+		  if (((x1<400) & ((y1>30)&(y1<100))) | ((x1<100) & ((y1>100)&(y1<180))) | ((x1<300) & ((y1>180)&(y1<240)))){
+				  do game_over();
+		  }
+			return;
+		}
+
+		method void check_right(int x2, int y2) {
+		  if (((x2=450) & ((y2>0)&(y2<130))) | ((x2=130) & ((y2>130)&(y2<160))) | ((x2=320) & ((y2>160)&(y2<255)))){
+				  do game_over();
+		  }
+			return;
+		}
+
+		method void check_win(int x1, int y1) {
+			if  ((x1=1)&(y1>240)) {
+				do Screen.clearScreen();
+				do Output.printString("CONGRATULATIONS!   YOU WIN!");
+				do Sys.halt();
+
+			}
+			return;
+		}
+
+
+
+		method void game_over () {
+			do Output.printString("You died");
+	    do Sys.halt();
+		  return;
+		}
+
+/*
+
+			do Screen.drawLine(0,0, 450, 0);
+			do Screen.drawLine(450,0, 450, 130);
+			do Screen.drawLine(450,130, 130, 130);
+			do Screen.drawLine(130,130, 130, 160);
+			do Screen.drawLine(130,160, 320, 160);
+			do Screen.drawLine(320,160, 320, 254);
+			do Screen.drawLine(320,255, 0, 255);
+
+      do Screen.drawLine(0,30, 400, 30);
+      do Screen.drawLine(400,30, 400, 100);
+			do Screen.drawLine(400,100, 100, 100);
+			do Screen.drawLine(100,100, 100, 180);
+			do Screen.drawLine(100,180, 300, 180);
+			do Screen.drawLine(300,180, 300, 240);
+			do Screen.drawLine(300,240, 0, 240);*/
 }

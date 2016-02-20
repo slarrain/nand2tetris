@@ -302,18 +302,314 @@ pop temp 0
 label IF_FALSE0
 push constant 0
 return
-function Square.getX 0
+function Square.check 4
 push argument 0
 pop pointer 0
 push this 0
-return
-function Square.getY 0
-push argument 0
-pop pointer 0
+pop local 0
 push this 1
+pop local 1
+push local 0
+push this 2
+add
+pop local 2
+push local 1
+push this 2
+add
+pop local 3
+push pointer 0
+push local 0
+push local 1
+call Square.check_up 3
+pop temp 0
+push pointer 0
+push local 2
+push local 3
+call Square.check_down 3
+pop temp 0
+push pointer 0
+push local 0
+push local 1
+call Square.check_left 3
+pop temp 0
+push pointer 0
+push local 2
+push local 3
+call Square.check_right 3
+pop temp 0
+push pointer 0
+push local 0
+push local 1
+call Square.check_win 3
+pop temp 0
+push constant 0
 return
-function Square.getSize 0
+function Square.check_up 0
 push argument 0
 pop pointer 0
-push this 2
+push argument 2
+push constant 100
+eq
+push argument 1
+push constant 400
+lt
+and
+push argument 2
+push constant 160
+eq
+push argument 1
+push constant 130
+gt
+and
+or
+push argument 2
+push constant 240
+eq
+push argument 1
+push constant 300
+lt
+and
+or
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push pointer 0
+call Square.game_over 1
+pop temp 0
+label IF_FALSE0
+push constant 0
+return
+function Square.check_down 0
+push argument 0
+pop pointer 0
+push argument 2
+push constant 30
+eq
+push argument 1
+push constant 400
+lt
+and
+push argument 2
+push constant 130
+eq
+push argument 1
+push constant 130
+gt
+and
+or
+push argument 2
+push constant 180
+eq
+push argument 1
+push constant 300
+lt
+and
+or
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push pointer 0
+call Square.game_over 1
+pop temp 0
+label IF_FALSE0
+push constant 0
+return
+function Square.check_left 0
+push argument 0
+pop pointer 0
+push argument 1
+push constant 400
+lt
+push argument 2
+push constant 30
+gt
+push argument 2
+push constant 100
+lt
+and
+and
+push argument 1
+push constant 100
+lt
+push argument 2
+push constant 100
+gt
+push argument 2
+push constant 180
+lt
+and
+and
+or
+push argument 1
+push constant 300
+lt
+push argument 2
+push constant 180
+gt
+push argument 2
+push constant 240
+lt
+and
+and
+or
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push pointer 0
+call Square.game_over 1
+pop temp 0
+label IF_FALSE0
+push constant 0
+return
+function Square.check_right 0
+push argument 0
+pop pointer 0
+push argument 1
+push constant 450
+eq
+push argument 2
+push constant 0
+gt
+push argument 2
+push constant 130
+lt
+and
+and
+push argument 1
+push constant 130
+eq
+push argument 2
+push constant 130
+gt
+push argument 2
+push constant 160
+lt
+and
+and
+or
+push argument 1
+push constant 320
+eq
+push argument 2
+push constant 160
+gt
+push argument 2
+push constant 255
+lt
+and
+and
+or
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push pointer 0
+call Square.game_over 1
+pop temp 0
+label IF_FALSE0
+push constant 0
+return
+function Square.check_win 0
+push argument 0
+pop pointer 0
+push argument 1
+push constant 1
+eq
+push argument 2
+push constant 240
+gt
+and
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+call Screen.clearScreen 0
+pop temp 0
+push constant 27
+call String.new 1
+push constant 67
+call String.appendChar 2
+push constant 79
+call String.appendChar 2
+push constant 78
+call String.appendChar 2
+push constant 71
+call String.appendChar 2
+push constant 82
+call String.appendChar 2
+push constant 65
+call String.appendChar 2
+push constant 84
+call String.appendChar 2
+push constant 85
+call String.appendChar 2
+push constant 76
+call String.appendChar 2
+push constant 65
+call String.appendChar 2
+push constant 84
+call String.appendChar 2
+push constant 73
+call String.appendChar 2
+push constant 79
+call String.appendChar 2
+push constant 78
+call String.appendChar 2
+push constant 83
+call String.appendChar 2
+push constant 33
+call String.appendChar 2
+push constant 32
+call String.appendChar 2
+push constant 10
+call String.appendChar 2
+push constant 32
+call String.appendChar 2
+push constant 89
+call String.appendChar 2
+push constant 79
+call String.appendChar 2
+push constant 85
+call String.appendChar 2
+push constant 32
+call String.appendChar 2
+push constant 87
+call String.appendChar 2
+push constant 73
+call String.appendChar 2
+push constant 78
+call String.appendChar 2
+push constant 33
+call String.appendChar 2
+call Output.printString 1
+pop temp 0
+call Sys.halt 0
+pop temp 0
+label IF_FALSE0
+push constant 0
+return
+function Square.game_over 0
+push argument 0
+pop pointer 0
+push constant 8
+call String.new 1
+push constant 89
+call String.appendChar 2
+push constant 111
+call String.appendChar 2
+push constant 117
+call String.appendChar 2
+push constant 32
+call String.appendChar 2
+push constant 100
+call String.appendChar 2
+push constant 105
+call String.appendChar 2
+push constant 101
+call String.appendChar 2
+push constant 100
+call String.appendChar 2
+call Output.printString 1
+pop temp 0
+call Sys.halt 0
+pop temp 0
+push constant 0
 return
