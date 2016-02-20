@@ -57,8 +57,8 @@ class SquareGame {
 			do Screen.drawLine(320,160, 320, 254);
 			do Screen.drawLine(320,255, 0, 255);
 
-      do Screen.drawLine(0,30, 400, 30);
-      do Screen.drawLine(400,30, 400, 100);
+      			do Screen.drawLine(0,30, 400, 30);
+      			do Screen.drawLine(400,30, 400, 100);
 			do Screen.drawLine(400,100, 100, 100);
 			do Screen.drawLine(100,100, 100, 180);
 			do Screen.drawLine(100,180, 300, 180);
@@ -75,18 +75,41 @@ class SquareGame {
 			return;
 		}
 
-/*
-		method boolean array_positions () {
-			field int x1, y1, x2, y2;
-			field Array position;
-			let x1 = square.x;
-			let y1 = square.y;
-			let x2 = x1 + square.size;
-			let y2 = y1 + square.size;
-			let position = Array.new()
+
+		method void check () {
+			var int x1, y1, x2, y2;
+			let x1 = square.getX();
+			let y1 = square.getY();
+			let x2 = x1 + square.getSize();
+			let y2 = y1 + square.getSize();
+
+		  do check_up(x1, y1);
+		  //do check_down();
+		  //do check_left();
+		  //do check_right();
+		return;
 		}
 
-*/
+		method void check_up(int x1, int y1) {
+		  //| (y1=180 & x1>100) | (y1=240 & x1<300)   & x1<400
+		  do Output.printInt(x1);
+		  do Output.printInt(y1);
+		  if (	(y1=100 ) ) {
+		    //let up = true;
+		    do game_over();
+
+		  }
+						   return;
+		}
+
+
+		method void game_over () {
+			do Output.printString("You died");
+	    	do Sys.halt();
+		  return;
+		}
+
+
 
 
 
@@ -146,6 +169,7 @@ class SquareGame {
             while (~(key = 0)) {
                 let key = Keyboard.keyPressed();
                 do moveSquare();
+	     do check();
             }
         }
             

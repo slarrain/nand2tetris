@@ -174,6 +174,80 @@ pop temp 0
 label IF_FALSE0
 push constant 0
 return
+function SquareGame.check 4
+push argument 0
+pop pointer 0
+push this 0
+call Square.getX 1
+pop local 0
+push this 0
+call Square.getY 1
+pop local 1
+push local 0
+push this 0
+call Square.getSize 1
+add
+pop local 2
+push local 1
+push this 0
+call Square.getSize 1
+add
+pop local 3
+push pointer 0
+push local 0
+push local 1
+call SquareGame.check_up 3
+pop temp 0
+push constant 0
+return
+function SquareGame.check_up 0
+push argument 0
+pop pointer 0
+push argument 1
+call Output.printInt 1
+pop temp 0
+push argument 2
+call Output.printInt 1
+pop temp 0
+push argument 2
+push constant 100
+eq
+if-goto IF_TRUE0
+goto IF_FALSE0
+label IF_TRUE0
+push pointer 0
+call SquareGame.game_over 1
+pop temp 0
+label IF_FALSE0
+push constant 0
+return
+function SquareGame.game_over 0
+push argument 0
+pop pointer 0
+push constant 8
+call String.new 1
+push constant 89
+call String.appendChar 2
+push constant 111
+call String.appendChar 2
+push constant 117
+call String.appendChar 2
+push constant 32
+call String.appendChar 2
+push constant 100
+call String.appendChar 2
+push constant 105
+call String.appendChar 2
+push constant 101
+call String.appendChar 2
+push constant 100
+call String.appendChar 2
+call Output.printString 1
+pop temp 0
+call Sys.halt 0
+pop temp 0
+push constant 0
+return
 function SquareGame.dispose 0
 push argument 0
 pop pointer 0
@@ -293,6 +367,9 @@ call Keyboard.keyPressed 0
 pop local 0
 push pointer 0
 call SquareGame.moveSquare 1
+pop temp 0
+push pointer 0
+call SquareGame.check 1
 pop temp 0
 goto WHILE_EXP2
 label WHILE_END2
