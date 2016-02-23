@@ -265,17 +265,24 @@ def compile_return(tree, tok_type, tok):
 
 
 def compile_expression(tree):
+    subR = SubElement(tree, 'expression')
+
+
 
 def compile_term(tree):
 
 def compile_expression_list(tree):
     subR = SubElement(tree, 'expressionList')
     while (True):
-        tok_type, tok  = next(token_it)
+        tok_type, tok = compile_expression(SubR)
         if (tok==')'):
             break
-        temp = SubElement (subR, tok_type)
-        temp.text = tok
+        if (tok==','):
+            temp = SubElement (subR, tok_type)
+            temp.text = tok
+
+        # No need?
+        #tok_type, tok  = next(token_it)
 
     return tok_type, tok
 
