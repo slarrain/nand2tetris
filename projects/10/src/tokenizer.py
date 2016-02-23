@@ -14,7 +14,10 @@ okeys = ["constructor", "field", "void", "int", "true"]
 dkeys = ["char", "false"]
 ops =  ["{", "+", ".", "}",",", "(", ")", "[","]", "-", "*", "/", "&", "|", "&", "<", ">", "=", "~", ";"]
 
+# TODO: Take comments /**
+
 tokens = []
+token_it = ()
 i = 0
 
 def read(filename):
@@ -28,14 +31,14 @@ def tokenize_line(line):
     line = " ".join(re.sub(comment,"",line).split())
     line_tokens = [token for token in re.split(r'('+ delimiters + r')',line) if token not in ('', ' ')]
     for x in line_tokens:
-        token_type = tok_type(x)
-        tokens.append((tok_type, return_val(x, token_type)))
+        tok_type = token_type(x)
+        tokens.append((tok_type, return_val(x, tok_type)))
         print (x, tok_type(x))
     global i
     i = len(tokens)
     return tokens
 
-def tok_type(token):
+def token_type(token):
 
     if token in keywords:
         return 'KEYWORD'
@@ -63,18 +66,58 @@ def isnum(string):
     except ValueError:
         return False
 
-def compiler(filename):
+def comp(filename):
     out = open (filename[:-4]+'.xml', 'w')
 
     out.close()
 
-def compile():
-    tree = Element ()
+def compiler(tree):
+    tok_type, tok  = next(token_it)
+    while (True):
+        if tok in ['static','field']:
+            compile_class_vardec(tree, tok_type, tok)
+        elif tok in ['constructor','function','method']:
+            compile_subroutine(tree, tok_type, tok)
+        else:
+            #Cierre parentesis
+        try:
+            tok_type, tok  = next(token_it)
+        except:
+            break
+
+def compile_class_vardec(tree, tok_type, tok):
+    subR = SubElement(tree, 'classVarDec')
+    while (tok != ';'):
+        SubElement (subR, tok_type, text=tok)
+        try:
+            tok_type, tok  = next(token_it)
+        except:
+            break
+    #We still want the ';' to be classVarDec
+    SubElement (subR, tok_type, text=tok)
+
+def compile_subroutine (tree, tok_type, tok):
+    subR = SubElement(tree, 'subroutineDec')
+    while (True):
+
+        SubElement (subR, tok_type, text=tok)
+
+        if (tok=='('):
+            
+
 
 def compile_class():
     global i
     token_it = iter(tokens)
+
+    # if tok!='class':
+    #     print ('Error on compile class')
     tree = Element('class')
+    for j in range(2):
+        tok_type, tok  = next(token_it)
+        SubElement (tree, tok_type, text=tok)
+    compiler(tree)
+
 
     i+=1
 
