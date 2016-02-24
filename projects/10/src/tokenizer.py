@@ -1,5 +1,6 @@
 import re
 import sys
+from itertools import chain
 from xml.etree.ElementTree import Element, SubElement, Comment, tostring
 
 string = r'(?:"[^"]*["])|(?:\'[^\']*[\'])'
@@ -42,20 +43,20 @@ def tokenize_line(line):
 def token_type(token):
 
     if token in keywords:
-        return 'KEYWORD'
+        return 'keyword'
     elif token in symbols:
-        return 'SYMBOL'
+        return 'symbol'
     elif isnum(token):
-        return 'INT_CONST'
+        return 'int_const'
     elif re.match(string,token):
-        return 'STRING_CONST'
+        return 'string_const'
     else:
-        return 'IDENTIFIER'
+        return 'identifier'
 
 def return_val(token, token_type):
-    if token_type == 'STRING_CONST':
+    if token_type == 'string_const':
         return token[1:-1]
-    elif token_type == 'INT_CONST':
+    elif token_type == 'int_const':
         return int(token)
     else:
         return token
@@ -266,10 +267,27 @@ def compile_return(tree, tok_type, tok):
 
 def compile_expression(tree):
     subR = SubElement(tree, 'expression')
-
+    tok_type, tok = compile_term(subR)
+    while (tok in '=+-*/&|~<>'):
+        temp = SubElement (subR, tok_type)
+        temp.text = tok
+        tok_type, tok  = compile_term(subR)
+    return tok_type, tok
 
 
 def compile_term(tree):
+    subR = SubElement(tree, 'term')
+    tok_type, tok  = next(token_it)
+    if tok_type in ['string_const','int_const','keyword']:
+        temp = SubElement (subR, tok_type)
+        temp.text = tok
+    if tok_type == 'identifier':
+
+def see_next():
+    tok_type, tok  = next(token_it)
+    token_it = chain([[tok_type, tok]], token_it)
+    return tok_type, tok
+
 
 def compile_expression_list(tree):
     subR = SubElement(tree, 'expressionList')
