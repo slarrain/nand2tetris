@@ -1,3 +1,10 @@
+#!/usr/bin/env python3
+
+#
+#   Santiago Larrain
+#   slarrain@uchicago.edu
+#
+
 import re
 import sys
 from itertools import chain
@@ -10,31 +17,28 @@ delimiters = r'[\(\)\[\]\{\}\,\;\=\.\+\-\*\/\&\|\~\<\>]|'+string+'| *'
 keywords = ('class','constructor','method','function','int','boolean','char','void',
             'var','static','field','let','do','if','else','while','return','true','false','null','this')
 
-keys = ["class", "function", "method", "static", "var", "boolean", "null", "this", "let", "do", "if", "else", "while", "return"]
-okeys = ["constructor", "field", "void", "int", "true"]
-dkeys = ["char", "false"]
-ops =  ["{", "+", ".", "}",",", "(", ")", "[","]", "-", "*", "/", "&", "|", "&", "<", ">", "=", "~", ";"]
-
 # TODO: Take comments /**
-# TODO: write to file
 
 tokens = []
 token_it = ()
-i = 0
 
 def read(filename):
     with open(filename, 'r') as f:
-        for line in f:
+
+        #for line in f:
             #Get rid of comments
-            tokenize_line(line)
+        tokenize_line(f.read())
+    write_tokens(filename)
 
 def write_tokens(filename):
-    with open (filename[:-4]+'T_sle.xml', 'w') as out_tok:
+    with open (filename[:-5]+'T_sle.xml', 'w') as out_tok:
+        out_tok.write('<tokens>\n')
         for pair in tokens:
             out_tok.write('<'+pair[0]+'> '+pair[1]+' </'+pair[0]+'>\n')
+        out_tok.write('</tokens>\n')
 
 def comp(filename, tree):
-    out = open (filename[:-4]+'_sle.xml', 'w')
+    out = open (filename[:-5]+'_sle.xml', 'w')
     out.write(tostring(tree))
     out.close()
 
@@ -44,10 +48,8 @@ def tokenize_line(line):
     for x in line_tokens:
         tok_type = token_type(x)
         tokens.append((tok_type, return_val(x, tok_type)))
-        print (x, tok_type(x))
-    global i
-    i = len(tokens)
-    return tokens
+        print (x, token_type(x))
+    #return tokens
 
 def token_type(token):
 
@@ -89,7 +91,7 @@ def compiler(tree):
             temp.text = tok
             #Cierre parentesis
         else:
-            print ('Error at compiler %s, %s', %(tok_type, tok))
+            print ('Error at compiler %s, %s', tok_type, tok)
         try:
             tok_type, tok  = next(token_it)
         except:
@@ -377,7 +379,7 @@ def compile_class():
 
     tree = Element('class')
     tok = ''
-    while (tok!='{')
+    while (tok!='{'):
         tok_type, tok  = next(token_it)
         temp = SubElement (tree, tok_type)
         temp.text = tok
