@@ -26,8 +26,17 @@ def read(filename):
     with open(filename, 'r') as f:
         for line in f:
             #Get rid of comments
-
             tokenize_line(line)
+
+def write_tokens(filename):
+    with open (filename[:-4]+'T_sle.xml', 'w') as out_tok:
+        for pair in tokens:
+            out_tok.write('<'+pair[0]+'> '+pair[1]+' </'+pair[0]+'>\n')
+
+def comp(filename, tree):
+    out = open (filename[:-4]+'_sle.xml', 'w')
+    out.write(tostring(tree))
+    out.close()
 
 def tokenize_line(line):
     line = " ".join(re.sub(comment,"",line).split())
@@ -68,11 +77,6 @@ def isnum(string):
     except ValueError:
         return False
 
-def comp(filename):
-    out = open (filename[:-4]+'.xml', 'w')
-
-    out.close()
-
 def compiler(tree):
     tok_type, tok  = next(token_it)
     while (True):
@@ -80,8 +84,12 @@ def compiler(tree):
             compile_class_vardec(tree, tok_type, tok)
         elif tok in ['constructor','function','method']:
             compile_subroutine(tree, tok_type, tok)
-        else:
+        elif tok=='}':
+            temp = SubElement (tree, tok_type)
+            temp.text = tok
             #Cierre parentesis
+        else:
+            print ('Error at compiler %s, %s', %(tok_type, tok))
         try:
             tok_type, tok  = next(token_it)
         except:
@@ -95,6 +103,7 @@ def compile_class_vardec(tree, tok_type, tok):
         try:
             tok_type, tok  = next(token_it)
         except:
+            print ('No next on compile_class_vardec')
             break
     #We still want the ';' to be classVarDec
     temp = SubElement (subR, tok_type)
@@ -271,7 +280,8 @@ def compile_expression(tree):
     while (tok in '=+-*/&|~<>'):
         temp = SubElement (subR, tok_type)
         temp.text = tok
-        tok_type, tok  = compile_term(subR)
+        compile_term(subR)
+        tok_type, tok  = next(token_it)
     return tok_type, tok
 
 
@@ -281,7 +291,52 @@ def compile_term(tree):
     if tok_type in ['string_const','int_const','keyword']:
         temp = SubElement (subR, tok_type)
         temp.text = tok
-    if tok_type == 'identifier':
+    elif tok_type == 'symbol':
+        if tok=='(':
+            temp = SubElement (subR, tok_type)
+            temp.text = tok # '('
+            tok_type, tok = compile_expression(subR)
+
+        temp = SubElement (subR, tok_type)
+        temp.text = tok # ')' or '-' | '~'
+    elif tok_type == 'identifier':
+        temp = SubElement (subR, tok_type)
+        temp.text = tok
+        tok_type, tok  = next(token_it)
+        if tok == '[':
+            temp = SubElement (subR, tok_type)
+            temp.text = tok
+            tok_type, tok = compile_expression(subR)
+
+            self.writeNextToken(']')
+        elif tok == '(':
+            temp = SubElement (subR, tok_type)
+            temp.text = tok
+            compile_expression_list(subR)
+
+            tok_type, tok  = next(token_it)
+
+            self.writeNextToken(')')
+        elif tok == '.':
+            temp = SubElement (subR, tok_type)
+            temp.text = tok # '.'
+            tok_type, tok  = next(token_it)
+
+            temp = SubElement (subR, tok_type)
+            temp.text = tok # 'subRoutinename-identifier'
+            tok_type, tok  = next(token_it)
+
+            temp = SubElement (subR, tok_type)
+            temp.text = tok # '('
+
+            compile_expression_list(subR)
+
+            tok_type, tok  = next(token_it)
+
+        temp = SubElement (subR, tok_type)
+        temp.text = tok # ')' | ']'
+    else:
+        print ('Error on compile_term: %s, %s' % (tok_type, tok))
 
 def see_next():
     tok_type, tok  = next(token_it)
@@ -318,19 +373,23 @@ def compile_parameter_list (tree):
 
 
 def compile_class():
-    global i
     token_it = iter(tokens)
 
-    # if tok!='class':
-    #     print ('Error on compile class')
     tree = Element('class')
-    for j in range(2):
+    tok = ''
+    while (tok!='{')
         tok_type, tok  = next(token_it)
-        SubElement (tree, tok_type, text=tok)
+        temp = SubElement (tree, tok_type)
+        temp.text = tok
     compiler(tree)
+    return tree
 
+def run(name):
+    read(name)
 
-    i+=1
+    #tree = compile_class()
+    #comp (name, tree)
+
 
 if __name__ == '__main__':
 
@@ -338,4 +397,4 @@ if __name__ == '__main__':
         print ('Usage: python3 tokenizer.py inputfile.jack')
     elif len(sys.argv) == 2:
         name = sys.argv[1]
-        read(name)
+        run(name)
