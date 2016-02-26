@@ -8,8 +8,9 @@
 import re
 import sys
 from itertools import chain
-from xml.etree.ElementTree import Element, SubElement, Comment, tostring
-
+from xml.etree.ElementTree import ElementTree, Element, SubElement, Comment, tostring
+from xml.dom import minidom
+2
 string = r'(?:"[^"]*["])|(?:\'[^\']*[\'])'
 comment = r'(?:(?:\/\*\*(?:.|\n)*?\*\/)|(?:\/\/[^\n]*\n))'
 symbols = r'()[]{},;=.+-*/&|~<>'
@@ -39,8 +40,20 @@ def write_tokens(filename):
 
 def comp(filename, tree):
     out = open (filename[:-5]+'_sle.xml', 'wb')
-    out.write(tostring(tree))
+
+    #tree.write(out, short_empty_elements=False)
+    out.write(tostring(tree, short_empty_elements=False))
+    #out.write(prettify(tree))
     out.close()
+
+def prettify(elem):
+    """Return a pretty-printed XML string for the Element.
+    From: https://pymotw.com/2/xml/etree/ElementTree/create.html#building-element-nodes
+    """
+    rough_string = tostring(elem, 'utf-8', short_empty_elements=False)
+    #print (rough_string)
+    reparsed = minidom.parseString(rough_string)
+    return reparsed.toprettyxml(indent="  ")
 
 def tokenize_line(line):
     line = " ".join(re.sub(comment,"",line).split())
@@ -86,12 +99,13 @@ def compiler(tree):
             compile_class_vardec(tree, tok_type, tok)
         elif tok in ['constructor','function','method']:
             compile_subroutine(tree, tok_type, tok)
-        elif tok=='}':
+        if tok=='}':
             temp = SubElement (tree, tok_type)
             temp.text = tok
+            break
             #Cierre parentesis
-        else:
-            print ('Error at compiler %s, %s', tok_type, tok)
+        # else:
+        #     print ('Error at compiler %s, %s', tok_type, tok)
         try:
             tok_type, tok  = next(token_it)
         except:
@@ -114,17 +128,23 @@ def compile_class_vardec(tree, tok_type, tok):
 def compile_subroutine (tree, tok_type, tok):
     subR = SubElement(tree, 'subroutineDec')
     while (True):
-
+        if (tok=='('):
+            temp = SubElement (subR, tok_type)
+            temp.text = tok
+            tok_type, tok = compile_parameter_list(subR)
+            #print (tok_type, tok)
         temp = SubElement (subR, tok_type)
         temp.text = tok
-        if (tok=='('):
-            tok_type, tok = compile_parameter_list(subR)
+
+
+
         if (tok==')'):
             compile_subroutine_body (subR)
-
-        if (tok=='}'):
+        a, b = see_next()
+        if (b=='}'):
             break
         tok_type, tok  = next(token_it)
+        #print (tok_type, tok)
 
 def compile_subroutine_body(tree):
     #No need for a while loop
@@ -134,13 +154,15 @@ def compile_subroutine_body(tree):
     temp = SubElement (subR, tok_type)
     temp.text = tok #Opening '{'
     tok_type, tok  = next(token_it)
-    if (tok=='var'):
-        compile_var_dec (subR, tok_type, tok)
 
-    tok_type, tok = statements(subR)
+    while (tok=='var'):
+        compile_var_dec (subR, tok_type, tok)
+        tok_type, tok  = next(token_it)
+
+    tok_type, tok = statements(subR, tok_type, tok)
+
     temp = SubElement (subR, tok_type)
     temp.text = tok #Closing '}'
-    #while (True):
 
 def compile_var_dec(tree, tok_type, tok):
     subR = SubElement(tree, 'varDec')
@@ -152,11 +174,15 @@ def compile_var_dec(tree, tok_type, tok):
     temp.text = tok #';'
     #return tok_type, tok
 
-def statements(tree):
+def statements(tree, tok_type, tok):
     subR = SubElement(tree, 'statements')
-    tok = ''
-    while (tok!='}'):
-        tok_type, tok  = next(token_it)
+    #tok = ''
+    # while (tok!='}'):
+    while (True):
+
+        print (tok)
+        if (tok=='}'):
+            break
         if (tok=='let'):
             compile_let(subR, tok_type, tok)
         elif (tok=='do'):
@@ -167,6 +193,7 @@ def statements(tree):
             compile_if(subR, tok_type, tok)
         elif (tok=='return'):
             compile_return(subR, tok_type, tok)
+        tok_type, tok  = next(token_it)
         '''
         #Beware
         elif (tok=='expression'):
@@ -174,6 +201,7 @@ def statements(tree):
         elif (tok=='term'):
             compile_term(subR, tok_type, tok)
         '''
+
     return tok_type, tok
 
 
@@ -190,16 +218,18 @@ def compile_do(tree, tok_type, tok):
 
 def compile_let(tree, tok_type, tok):
     subR = SubElement(tree, 'letStatement')
-    while (tok!=';'):
+    while (True):
         temp = SubElement (subR, tok_type)
         temp.text = tok
         if (tok=='='):
             tok_type, tok = compile_expression(subR)
             temp = SubElement (subR, tok_type)
             temp.text = tok
+        if (tok==';'):
+            break
         tok_type, tok  = next(token_it)
-    temp = SubElement (subR, tok_type)
-    temp.text = tok #';'
+    #temp = SubElement (subR, tok_type)
+    #temp.text = tok #';'
 
 def compile_while(tree, tok_type, tok):
     subR = SubElement(tree, 'whileStatement')
@@ -223,8 +253,10 @@ def compile_while(tree, tok_type, tok):
     # '{'
     temp = SubElement (subR, tok_type)
     temp.text = tok
+    tok_type, tok  = next(token_it)
 
-    tok_type, tok = statements(subR)
+
+    tok_type, tok = statements(subR, tok_type, tok)
 
     # '}'
     temp = SubElement (subR, tok_type)
@@ -253,8 +285,10 @@ def compile_if(tree, tok_type, tok):
     # '{'
     temp = SubElement (subR, tok_type)
     temp.text = tok
+    tok_type, tok  = next(token_it)
 
-    tok_type, tok = statements(subR)
+
+    tok_type, tok = statements(subR, tok_type, tok)
 
     # '}'
     temp = SubElement (subR, tok_type)
@@ -267,10 +301,13 @@ def compile_return(tree, tok_type, tok):
     # return
     temp = SubElement (subR, tok_type)
     temp.text = tok
-    tok_type, tok  = next(token_it)
+    
+    tok_type, tok  = see_next()
 
     if (tok!=';'):
         tok_type, tok = compile_expression(subR)
+    else:
+        tok_type, tok  = next(token_it)
 
     # ';'
     temp = SubElement (subR, tok_type)
@@ -306,22 +343,24 @@ def compile_term(tree):
     elif tok_type == 'identifier':
         temp = SubElement (subR, tok_type)
         temp.text = tok
-        tok_type, tok  = next(token_it)
+        tok_type, tok  = see_next()
         if tok == '[':
+            tok_type, tok  = next(token_it)
             temp = SubElement (subR, tok_type)
             temp.text = tok
             tok_type, tok = compile_expression(subR)
             temp = SubElement (subR, tok_type)
             temp.text = tok # ')' | ']'
         elif tok == '(':
+            tok_type, tok  = next(token_it)
             temp = SubElement (subR, tok_type)
             temp.text = tok
             compile_expression_list(subR)
 
             tok_type, tok  = next(token_it)
-            temp = SubElement (subR, tok_type)
-            temp.text = tok # ')' | ']'
+
         elif tok == '.':
+            tok_type, tok  = next(token_it)
             temp = SubElement (subR, tok_type)
             temp.text = tok # '.'
             tok_type, tok  = next(token_it)
@@ -385,6 +424,10 @@ def compile_class():
     token_it = iter(tokens)
 
     tree = Element('class')
+
+    #Test
+    #super_tree = ElementTree(tree)
+    #test
     tok = ''
     while (tok!='{'):
         tok_type, tok  = next(token_it)
@@ -392,6 +435,7 @@ def compile_class():
         temp.text = tok
     compiler(tree)
     return tree
+    #return super_tree
 
 def run(name):
     read(name)
