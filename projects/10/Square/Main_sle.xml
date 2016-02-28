@@ -25,7 +25,13 @@
           <symbol>=</symbol>
           <expression>
             <term>
-              <identifier>game</identifier>
+              <identifier>SquareGame</identifier>
+              <symbol>.</symbol>
+              <identifier>new</identifier>
+              <symbol>(</symbol>
+              <expressionList>
+</expressionList>
+              <symbol>)</symbol>
             </term>
           </expression>
           <symbol>;</symbol>
