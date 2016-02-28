@@ -39,11 +39,22 @@ def write_tokens(filename):
         out_tok.write('</tokens>\n')
 
 def comp(filename, tree):
-    out = open (filename[:-5]+'_sle.xml', 'wb')
+    out = open (filename[:-5]+'_sle.xml', 'w')
 
     #tree.write(out, short_empty_elements=False)
-    out.write(tostring(tree, short_empty_elements=False))
-    #out.write(prettify(tree))
+    #out.write(tostring(tree, short_empty_elements=False))
+    output = prettify(tree)
+
+    #Fixes output to make it look like the test file
+
+    # First line
+    output = output.replace('<?xml version="1.0" ?>\n', '')
+
+    # Empty tags
+    output = output.replace('expressionList/', 'expressionList>\n</expressionList')
+    output = output.replace('parameterList/', 'parameterList>\n</parameterList')
+
+    out.write(output)
     out.close()
 
 def prettify(elem):
@@ -81,7 +92,7 @@ def return_val(token, token_type):
     if token_type == 'stringConstant':
         return token[1:-1]
     elif token_type == 'integerConstant':
-        return int(token)
+        return token
     else:
         return token
 
@@ -140,6 +151,7 @@ def compile_subroutine (tree, tok_type, tok):
 
         if (tok==')'):
             compile_subroutine_body (subR)
+            break
         a, b = see_next()
         if (b=='}'):
             break
@@ -180,7 +192,7 @@ def statements(tree, tok_type, tok):
     # while (tok!='}'):
     while (True):
 
-        print (tok)
+        #print (tok)
         if (tok=='}'):
             break
         if (tok=='let'):
@@ -221,7 +233,7 @@ def compile_let(tree, tok_type, tok):
     while (True):
         temp = SubElement (subR, tok_type)
         temp.text = tok
-        if (tok=='='):
+        if (tok=='=' or tok=='['):
             tok_type, tok = compile_expression(subR)
             temp = SubElement (subR, tok_type)
             temp.text = tok
@@ -301,7 +313,7 @@ def compile_return(tree, tok_type, tok):
     # return
     temp = SubElement (subR, tok_type)
     temp.text = tok
-    
+
     tok_type, tok  = see_next()
 
     if (tok!=';'):
@@ -338,8 +350,13 @@ def compile_term(tree):
             temp.text = tok # '('
             tok_type, tok = compile_expression(subR)
 
-        temp = SubElement (subR, tok_type)
-        temp.text = tok # ')' or '-' | '~'
+            temp = SubElement (subR, tok_type)
+            temp.text = tok # '-' | '~'
+        else:
+            temp = SubElement (subR, tok_type)
+            temp.text = tok # -' | '~'
+            compile_term(subR)
+
     elif tok_type == 'identifier':
         temp = SubElement (subR, tok_type)
         temp.text = tok
