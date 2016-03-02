@@ -24,11 +24,11 @@ class SymbolTable (object):
 
             # class variable declarations cases
             if element.tag == 'classVarDec':
-                self.classVarDec (self, element)
+                self.classVarDec (element)
 
             # subroutine's
             if element.tag == 'subroutineDec':
-                self.subroutineDec (self, element)
+                self.subroutineDec (element)
 
     def classVarDec(self, tree):
         '''
@@ -37,11 +37,15 @@ class SymbolTable (object):
         kind = tree[0].text
         ttype = tree[1].text
         for element in tree[2:]:
-            if element.tag = 'identifier':
+            if element.tag == 'identifier':
                 name = element.text
                 self.classTable[name] = [ttype, kind, self.varcount(kind)]
 
-    def varcount(self, kind, table=self.classTable):
+    def varcount(self, kind, table='class'):
+        if table_name == 'class':
+            table = self.classTable
+        else:
+            table = self.subroutineTables[table_name]
         return len([k for [t, k, n] in table.values() if k == kind])
 
     def subroutineDec (self, tree):
@@ -52,14 +56,17 @@ class SymbolTable (object):
         self.subroutineTables[name] = table
         self.currentT = table
 
+        # TODO: Solve this case
         #Constructor case has an extra identifier
         if kind == 'constructor':
-            table[ttype] = [None, kind, self.varcount(kind)]
+            table[ttype] = [None, kind, self.varcount(kind, table)]
         #Regular case for cons, method, function
-        table[name] = [ttype, kind, self.varcount(kind)]
+        table[name] = [ttype, kind, self.varcount(kind, table)]
 
         #parameter list
         param_list = tree.find('parameterList')
+
+        # TODO: Solve case for 'this'
 
         if len(param_list) != 0:    #if its not empty
             for i in range(len(param_list)):
@@ -67,7 +74,7 @@ class SymbolTable (object):
                     name = param_list[i].text
                     ttype = param_list[i-1].text
                     kind = 'argument'
-                    table[name] = [ttype, kind, self.varcount(kind)]
+                    table[name] = [ttype, kind, self.varcount(kind, table)]
 
         self.subroutineBody (tree[-1])
 
@@ -79,6 +86,7 @@ class SymbolTable (object):
 
     def subroutineBody (self, tree):
         varDec = tree.findall('varDec')
+        #print (varDec)
         if varDec is not None:
             self.vardec(varDec)
 
@@ -86,14 +94,17 @@ class SymbolTable (object):
         '''
         Populates the table for Var Dec's in subroutineBody
         '''
+        # TODO: Solve case var identifier identifier
 
         for varDec in trees:
+            #print (varDec)
             ttype = varDec[0].text
             kind = varDec[1].text
             for i in range(len(varDec)):
-                if varDec[i].tag = 'identifier':
+                print (varDec[i])
+                if varDec[i].tag == 'identifier':
                     name = varDec[i].text
-                    self.currentT = [ttype, kind, self.varcount(kind)]
+                    self.currentT[name] = [ttype, kind, self.varcount(kind, self.currentT)]
 
 
 def run(name):
@@ -102,7 +113,9 @@ def run(name):
     st = SymbolTable()
     st.start(tree)
     print (st.classTable)
-    print (st.subroutineTables)
+    for x in st.subroutineTables:
+        print (st.subroutineTables[x])
+    #print (st.subroutineTables)
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:
