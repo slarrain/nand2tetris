@@ -223,5 +223,26 @@ class Compilator (object):
             self.writer.writeLabel(label2)              #WHILE_END
 
         def compileReturn(self, tree):
+            exp = tree.find('expression')
+            if exp is not None:
+                self.compile_expression(exp)                #this should push return value to top of stack
+            else:
+                self.writer.writePush('constant',0)     # if is void return 0
+            self.writer.writeReturn()
 
         def compileIf(self, tree):
+            label1 = 'IF_TRUE%d' %self.n_if
+            label2 = 'IF_FALSE%d' %self.n_if
+            label3 = 'IF_END%d' %self.n_if
+            self.n_if += 1
+            self.compile_expression(tree.find('expression')) #calculate (condition)
+            self.writer.writeIf(label1)         #if-goto IF_TRUE
+            self.writer.writeGoto(label2)       # GOTO IF_FALSE
+            self.writer.writeLabel(label1)      #IF_TRUE
+            self.compile_statements(tree.find('statements'))
+            if len(tree.findall('keyword')) == 2:   # 'else'
+                self.writer.writeGoto(label3)   #GOTO IF_END
+            self.writer.writeLabel(label2)      #IF_FALSE
+            if len(tree.findall('keyword')) == 2:   # 'else'
+                self.compile_statements(tree.findall('statements')[-1]) #second statement
+                self.writer.writeLabel(label3)  #IF_END
