@@ -11,6 +11,8 @@ class Compilator (object):
         self.writer = writer
         self.className = ''
         self.funcName = ''
+        self.n_if = 0
+        self.n_while = 0
 
     def start(self, tree):
 
@@ -104,24 +106,39 @@ class Compilator (object):
 
         def compile_subroutineCall(self, tree):
             explist_tree = tree.find('expressionList')
-            self.compile_expressionList(explist_tree)
-
             count = len(explist_tree.findall('expression'))
-            #Figure THIS OUT
+            name = tree[0].text
+            index = self.table.getindex(self.funcName, name)
+            kind = self.table.getkind(self.funcName, name)
             sr_name = tree.findall('identifier')
             if len(sr_name)==2:  #className | varName . subroutineName case
-
+                if kind in ('field','local','static'):
+                    self.writer.writePush(kind,index)
+                    count +=1
+                ttype = self.table.getType(name)
+                if ttype == None:
+                    ttype = name
+                self.writer.writeCall('%s.%s' %(ttype,sr_name[1].text),count)
+            else:               # subroutineName (expression)   case`
+                self.writer.writePush('pointer',0)
+                count+=1
+                self.compile_expressionList(explist_tree)
+                self.writer.writeCall(self.className+'.'+name, count)
 
         def compile_term(self, tree):
+
             term = tree[0]
+
             if term.tag == 'integerConstant':
                 self.writer.writePush('constant', term.text)
+
             elif term.tag == 'stringConstant':
                 self.writer.writePush('constant',len(term.text))          # argument for String.new
                 self.writer.writeCall('String.new',1)               # create empty string of length len(tok)
                 for letter in term.text:
                     self.writer.writePush('constant',ord(letter))   # argument for String.appendChar
                     self.writer.writeCall('String.appendChar', 2)   # append each letter to string
+
             elif term.tag == 'keyword':
                 if term.text in ['false','null']:
                     self.writer.writePush('constant',0)
@@ -132,16 +149,21 @@ class Compilator (object):
                     self.writer.writePush('pointer',0)             # so 'return this' actually returns the pointer
                 else:
                     raise Exception('%s is not an acceptable term' %term.text)
+
             elif term.tag =='identifier':
                 name = term.text
-                index = self.table.subroutineTables[self.funcName][name][2]
-                kind = self.table.subroutineTables[self.funcName][name][1]
+                # ####
+                # index = self.table.subroutineTables[self.funcName][name][2]
+                # kind = self.table.subroutineTables[self.funcName][name][1]
+
+                index = self.table.getindex(self.funcName, name)
+                kind = self.table.getkind(self.funcName, name)
 
                 if len(tree) == 1:  #varName case
                      self.writer.writePush(kind,index)
                 else:               # varName [expression] case
                     exp = tree.find('expression')
-                    self.compileExpression(exp)
+                    self.compile_expression(exp)
 
                     self.writer.writePush(kind,index)
                     self.writer.writeArithmetic('add')
@@ -164,29 +186,41 @@ class Compilator (object):
                 print ("Error inside term")
 
 
-
-
-
-            elif len(tree)>1:       # We have an expression in
-            term.tag == 'symbol':
-                if tok == '(':
-                    self.compileExpression()
-                    self.validate(')')
-                elif tok in ['-','~']:
-                    count = self.compileTerm() # push next term first, then do operation
-                    if tok == '-':
-                        op = 'neg'
-                    else:
-                        op = 'not'
-                    self.writer.writeArithmetic(op)
-
-
         def compileDo(self, tree):
             self.compile_subroutineCall(tree)
 
         def compileLet(self, tree):
+            name = tree[1].text
+
+            index = self.table.getindex(self.funcName, name)
+            kind = self.table.getkind(self.funcName, name)
+
+            expressions = tree.findall('expression')
+
+            if len(expressions)>1:      # 'let' varName ( '[' expression ']' )? '=' expression ';'
+                self.compile_expression(expressions[0])
+                self.writer.writePush(kind,index)
+                self.writer.writeArithmetic('add') # add together index and base of array
+                self.compile_expression(expressions[1])
+                self.writer.writePop('temp',0)
+                self.writer.writePop('pointer',1)
+                self.writer.writePush('temp',0)
+                self.writer.writePop('that',0)
+            else:       #let varname = expression case
+                self.compile_expression(expressions[0])
+                self.writer.writePop(kind,index)
 
         def compileWhile(self, tree):
+            label1 = 'WHILE_EXP%d' %self.whileNum
+            label2 = 'WHILE_END%d' %self.whileNum
+            self.n_while += 1
+            self.writer.writeLabel(label1)              #WHILE_EXP
+            self.compile_expression(tree.find('expression'))
+            self.writer.writeArithmetic('not')          #compute ~(condition)
+            self.writer.writeIf(label2)                 #if-goto WHILE_END
+            self.compileStatements(tree.find('statements'))
+            self.writer.writeGoto(label1)               #goto WHILE_EXP
+            self.writer.writeLabel(label2)              #WHILE_END
 
         def compileReturn(self, tree):
 

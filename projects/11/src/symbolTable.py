@@ -106,6 +106,24 @@ class SymbolTable (object):
                     name = varDec[i].text
                     self.currentT[name] = [ttype, kind, self.varcount(kind, self.currentT)]
 
+    def getindex(self, func, name):
+        try:
+            return self.subroutineTables[func][name][2]
+        except KeyError:
+            return None
+
+    def getkind(self, func, name):
+        try:
+            return self.subroutineTables[func][name][1]
+        except KeyError:
+            return None
+
+    def getkind(self, func, name):
+        try:
+            return self.subroutineTables[func][name][0]
+        except KeyError:
+            return None
+
 
 def run(name):
     read(name)
