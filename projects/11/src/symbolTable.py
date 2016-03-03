@@ -64,17 +64,18 @@ class SymbolTable (object):
         self.currentT = table
 
 
-        # TODO: Solve this case
         #Constructor case has an extra identifier
         # if kind == 'constructor':
         #     table[ttype] = [None, kind, self.varcount(kind, ttype)]
         #Regular case for cons, method, function
-        self.classTable[name] = [ttype, kind, self.varcount(kind, name)]
+        self.classTable[name] = [ttype, kind, self.varcount(kind)]
 
         #parameter list
         param_list = tree.find('parameterList')
 
-        # TODO: Solve case for 'this'
+        # Solve case for 'this'
+        if kind == 'method':
+            table['this'] = [None, 'argument', 0]
 
         if len(param_list) != 0:    #if its not empty
             for i in range(len(param_list)):
@@ -119,19 +120,27 @@ class SymbolTable (object):
         try:
             return self.subroutineTables[func][name][2]
         except KeyError:
-            return None
-
+            try:
+                return self.classTable[name][2]
+            except KeyError:
+                return None
     def getkind(self, func, name):
         try:
             return self.subroutineTables[func][name][1]
         except KeyError:
-            return None
+            try:
+                return self.classTable[name][1]
+            except KeyError:
+                return None
 
     def gettype(self, func, name):
         try:
             return self.subroutineTables[func][name][0]
         except KeyError:
-            return None
+            try:
+                return self.classTable[name][0]
+            except KeyError:
+                return None
 
 
 def run(name):

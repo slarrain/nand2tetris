@@ -118,21 +118,30 @@ class Compilator (object):
         explist_tree = tree.find('expressionList')
         count = len(explist_tree.findall('expression'))
         #print (explist_tree.getchildren())
-        name = tree[1].text
+        if tree[0].text == 'do':
+            name = tree[1].text
+        else:
+            name = tree[0].text
         index = self.table.getindex(self.funcName, name)
         kind = self.table.getkind(self.funcName, name)
         sr_name = tree.findall('identifier')
-        #print (name, index, kind, sr_name)
+        #print (tree[0].text, tree[1].text, tree[2].text)
+        #print (name, index, kind, len(sr_name))
         if len(sr_name)==2:  #className | varName . subroutineName case
+            #print (kind, index)
             if kind in ('field','var','static'):
+
                 self.writer.writePush(kind,index)
                 count +=1
             ttype = self.table.gettype(self.funcName, name)
-            print ('name: ', name, 'sr_name0: ', sr_name[0].text, 'sr_name1: ', sr_name[1].text, 'ttype: ', ttype, 'kind: ', kind)
+            #print ('name: ', name, 'sr_name0: ', sr_name[0].text, 'sr_name1: ', sr_name[1].text, 'ttype: ', ttype, 'kind: ', kind)
+            print (self.funcName, name, ttype)
             if ttype == None:
                 ttype = sr_name[0].text
+
             self.compile_expressionList(explist_tree)
-            self.writer.writeCall('%s.%s' %(ttype,sr_name[1].text),count)
+            #self.writer.writeCall('%s.%s' %(ttype,sr_name[1].text),count)
+            self.writer.writeCall('%s.%s' %(name,sr_name[1].text),count)
         else:               # subroutineName (expression)   case`
             self.writer.writePush('pointer',0)
             count+=1
@@ -178,7 +187,8 @@ class Compilator (object):
             kind = self.table.getkind(self.funcName, name)
 
             if len(tree) == 1:  #varName case
-                 self.writer.writePush(kind,index)
+                #print (kind, index)
+                self.writer.writePush(kind,index)
             # elif len(tree)==6 and tree[1].text=='.':
             elif tree[1].text=='.':
                 self.compile_subroutineCall(tree)
@@ -216,7 +226,7 @@ class Compilator (object):
 
         index = self.table.getindex(self.funcName, name)
         kind = self.table.getkind(self.funcName, name)
-
+        #print (name, self.funcName, kind, index)
         expressions = tree.findall('expression')
 
         if len(expressions)>1:      # 'let' varName ( '[' expression ']' )? '=' expression ';'
