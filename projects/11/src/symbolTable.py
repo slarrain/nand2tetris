@@ -41,11 +41,14 @@ class SymbolTable (object):
                 name = element.text
                 self.classTable[name] = [ttype, kind, self.varcount(kind)]
 
-    def varcount(self, kind, table='class'):
+    def varcount(self, kind, table_name='class'):
         if table_name == 'class':
             table = self.classTable
+        elif table_name==None:
+            table = self.currentT
         else:
             table = self.subroutineTables[table_name]
+        #print (kind, table)
         return len([k for [t, k, n] in table.values() if k == kind])
 
     def subroutineDec (self, tree):
@@ -53,15 +56,20 @@ class SymbolTable (object):
         kind = tree[0].text
         ttype = tree[1].text
         name = tree[2].text
+
+        #?
+        #self.classTable[name] = [name, None, kind]
+
         self.subroutineTables[name] = table
         self.currentT = table
 
+
         # TODO: Solve this case
         #Constructor case has an extra identifier
-        if kind == 'constructor':
-            table[ttype] = [None, kind, self.varcount(kind, table)]
+        # if kind == 'constructor':
+        #     table[ttype] = [None, kind, self.varcount(kind, ttype)]
         #Regular case for cons, method, function
-        table[name] = [ttype, kind, self.varcount(kind, table)]
+        self.classTable[name] = [ttype, kind, self.varcount(kind, name)]
 
         #parameter list
         param_list = tree.find('parameterList')
@@ -74,7 +82,7 @@ class SymbolTable (object):
                     name = param_list[i].text
                     ttype = param_list[i-1].text
                     kind = 'argument'
-                    table[name] = [ttype, kind, self.varcount(kind, table)]
+                    table[name] = [ttype, kind, self.varcount(kind, None)]
 
         self.subroutineBody (tree[-1])
 
@@ -98,13 +106,14 @@ class SymbolTable (object):
 
         for varDec in trees:
             #print (varDec)
-            ttype = varDec[0].text
-            kind = varDec[1].text
-            for i in range(len(varDec)):
-                print (varDec[i])
+            ttype = varDec[1].text
+            kind = varDec[0].text
+            for i in range(2, len(varDec)):
+                #print (varDec[i].tag, varDec[i].text)
+                #print (ttype, kind)
                 if varDec[i].tag == 'identifier':
                     name = varDec[i].text
-                    self.currentT[name] = [ttype, kind, self.varcount(kind, self.currentT)]
+                    self.currentT[name] = [ttype, kind, self.varcount(kind, None)]
 
     def getindex(self, func, name):
         try:
@@ -118,7 +127,7 @@ class SymbolTable (object):
         except KeyError:
             return None
 
-    def getkind(self, func, name):
+    def gettype(self, func, name):
         try:
             return self.subroutineTables[func][name][0]
         except KeyError:
@@ -131,9 +140,9 @@ def run(name):
     st = SymbolTable()
     st.start(tree)
     print (st.classTable)
-    for x in st.subroutineTables:
-        print (st.subroutineTables[x])
-    #print (st.subroutineTables)
+    # for x in st.subroutineTables:
+    #     print (st.subroutineTables[x])
+    print (st.subroutineTables)
 
 if __name__ == '__main__':
     if len(sys.argv) != 2:

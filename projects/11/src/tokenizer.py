@@ -295,6 +295,26 @@ def compile_if(tree, tok_type, tok):
     temp = SubElement (subR, tok_type)
     temp.text = tok
 
+    ##### NEW #####
+    tok_type1, tok1  = see_next()
+    if tok1 == 'else':
+        tok_type, tok  = next(token_it)
+        # else
+        temp = SubElement (subR, tok_type)
+        temp.text = tok
+        tok_type, tok  = next(token_it)
+
+        # '{'
+        temp = SubElement (subR, tok_type)
+        temp.text = tok
+        tok_type, tok  = next(token_it)
+
+        tok_type, tok = statements(subR, tok_type, tok)
+
+        # '}'
+        temp = SubElement (subR, tok_type)
+        temp.text = tok
+
 def compile_return(tree, tok_type, tok):
 
     subR = SubElement(tree, 'returnStatement')
