@@ -21,6 +21,10 @@ tokens = []
 token_it = []
 
 def read(filename):
+    global tokens
+    global token_it
+    tokens = []
+    token_it = []
     with open(filename, 'r') as f:
         tokenize_line(f.read())
 
