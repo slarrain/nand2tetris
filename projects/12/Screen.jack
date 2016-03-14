@@ -7,34 +7,265 @@
  * Graphic screen library.
  */
 class Screen {
+    static boolean color;
+    static Array exp2,mask_x,mask_y, screen;
 
     /** Initializes the Screen. */
     function void init() {
-    }
+        var int j,value,anterior;
+        let screen = 16384;
+        let color = true;
+        let exp2 = Array.new(16);
+        let j = 0;
+        let value = 1;
+        while(j < 16){
+            let exp2[j] = value;
+            let j = j + 1;
+            let value = value + value;
+        }
 
-    /** Erases the whole screen. */
-    function void clearScreen() {
-    }
+        let mask_x = Array.new(16);
+        let mask_y = Array.new(16);
 
-    /** Sets the color to be used in further draw commands
-     *  where white = false, black = true. */
-    function void setColor(boolean b) {
-    }
-
-    /** Draws the (x, y) pixel. */
-    function void drawPixel(int x, int y) {
-    }
-
-    /** Draws a line from (x1, y1) to (x2, y2). */
-    function void drawLine(int x1, int y1, int x2, int y2) {
+        let anterior = 0;
+        let j = 0;
+        while (j<16){
+            let mask_y[j] = anterior | exp2[j];
+            let anterior = mask_y[j];
+            let j = j + 1;
+        }
+        let anterior = 0;
+        let j = 15;
+        while (~(j<0)){
+            let mask_x[j] = anterior | exp2[j];
+            let anterior = mask_x[j];
+            let j = j -1;
+        }
+        return;
     }
 
     /** Draws a filled rectangle where the top left corner
      *  is (x1, y1) and the bottom right corner is (x2, y2). */
     function void drawRectangle(int x1, int y1, int x2, int y2) {
+        var int a;
+
+        if ( (x2 < x1) | (y2 < y1) ){
+            do Sys.error(9);
+        }
+
+        let a = 0;
+            do Screen.drawHorizontalLine(x1,y1+a,x2,y2-y1);
+        return;
     }
 
     /** Draws a filled circle of radius r around (cx, cy). */
     function void drawCircle(int cx, int cy, int r) {
+        var int ax, bx, dy;
+
+        // Assertions
+        if (~(r > 0)){
+            do Sys.error(13);
+        }
+        if ( (cx > 511)|(cx < 0 ) ){
+            do Sys.error(12);
+        }
+        if ((cy > 255)|(cy < 0)){
+            do Sys.error(12);
+        }
+
+        let dy = - r;
+        while (dy < (r+1)){
+            let ax = cx - Math.sqrt( (r*r)-(dy*dy) );
+            let bx = cx + Math.sqrt( (r*r)-(dy*dy) );
+            do Screen.drawHorizontalLine(ax,cy+dy,bx,1);
+            let dy = dy + 1;
+        }
+        return;
     }
+
+    /** Erases the whole screen. */
+    function void clearScreen() {
+        var int i, j;
+        var boolean oldColor;
+        let oldColor = color;
+        let color = false;
+        let i = 0;
+        while (i < 8192){
+            let i = i + 1;
+        }
+        let color = oldColor;
+        return;
+    }
+
+    /** Sets the color to be used in further draw commands
+     *  where white = false, black = true. */
+    function void setColor(boolean b) {
+        let color = b;
+        return;
+    }
+
+    /** Draws the (x, y) pixel. */
+    function void drawPixel(int x, int y) {
+        var int w, bit, old_value, new_value;
+
+        if ( (x > 511)|(x < 0 ) ){
+            do Sys.error(7);
+        }
+        if ((y > 255)|(y < 0)){
+            do Sys.error(7);
+        }
+
+        let w = (y*32) + (x/16);
+        let bit =  Math.mod(x,16);
+        let old_value = screen[w];
+        if (color){
+            let new_value = old_value | exp2[bit];
+        }
+        else{
+            let new_value = old_value & (~exp2[bit]);
+        }
+        let screen[w] = new_value;
+        return;
+    }
+
+    /** Draws a line from (x1, y1) to (x2, y2). */
+    function void drawLine(int x1, int y1, int x2, int y2) {
+        var int dif_x, dif_y, x_add, y_add;
+        var int dx, dy, z, a, b;
+
+        if ( (x1 > 511)|(x1 < 0 ) ){
+            do Sys.error(7);
+        }
+        if ((y1 > 255)|(y1 < 0)){
+            do Sys.error(7);
+        }
+        if ( (x2 > 511)|(x2 < 0 ) ){
+            do Sys.error(7);
+        }
+        if ((y2 > 255)|(y2 < 0)){
+            do Sys.error(7);
+        }
+
+        let dif_x = x2-x1;
+        let dif_y = y2-y1;
+        let dx = Math.abs(dif_x);
+        let dy = Math.abs(dif_y);
+        if (dif_x < 0){
+          let x_add = -1;
+        }
+        else {
+          let x_add = 1;
+        }
+        if (dif_y < 0){
+          let y_add = -1;
+        }
+        else {
+          let y_add = 1;
+        }
+        if (dif_x = 0){
+            do Screen.drawVerticalLine(x1,y1,y2,y_add);
+            return;
+        }
+        if (dif_y = 0){
+            do Screen.drawHorizontalLine(x1,y1,x2,1);
+            return;
+        }
+        let z = 0;
+        let a = 0;
+        let b = 0;
+        while ( (Math.abs(a) < dx) & (Math.abs(b) < dy) ){
+            do Screen.drawPixel(x1+a,y1+b);
+            if (z < 0){
+                let a = a + x_add;
+                let z = z + dy;
+            }
+            else{
+                let b = b + y_add;
+                let z = z - dx;
+            }
+        }
+        return;
+    }
+
+    function void drawVerticalLine(int x, int y, int y2, int incr){
+        var int b;
+        let b = 0;
+        while (~((y+b) > y2)){
+            do Screen.drawPixel(x,y+b);
+            let b = b + incr;
+        }
+        return;
+    }
+
+
+    function void drawHorizontalLine(int x, int y, int x2, int iter){
+        var int a, b, i, first, current, last;
+        var int color2, bitA, bitB, mask1, mask2, y32;
+
+        let a = Math.min(x,x2);
+        let b = Math.max(x,x2);
+        let bitA = Math.mod(a,16);
+        let bitB = Math.mod(b,16);
+
+        let y32 = y*32;
+        let first = y32+(a/16);
+        let last = y32+(b/16);
+        if (first = last){
+            let mask1 = mask_y[bitB] & mask_x[bitA];
+            if (~(color)){
+                let mask1 = ~mask1;
+            }
+            let current = first;
+            while (iter > 0){
+                    if (color){
+                        let screen[current] = screen[current] | mask1;
+                    }
+                    else{
+                        let screen[current] = screen[current] & mask1;
+                    }
+                let iter = iter - 1;
+                let current = current + 32;
+            }
+            return;
+        }
+        let mask1 = mask_x[bitA];
+        let mask2 = mask_y[bitB];
+        if (color){
+            let color2 = -1;
+        }
+        else {
+            let color2 = 0;
+            let mask1 = ~mask1;
+            let mask2 = ~mask2;
+        }
+
+        while (iter > 0){
+            let current = first;
+            if (color){
+                let screen[current] = screen[current] | mask1 ;
+            }
+            else{
+                let screen[current] = screen[current] & mask1 ;
+            }
+            let current = current + 1;
+
+            while (current < last){
+
+                    let screen[current] = color2;
+                    let current = current + 1;
+            }
+                if (color){
+                    let screen[current] = screen[current] | mask2 ;
+                }
+                else{
+                    let screen[current] = screen[current] & mask2 ;
+                }
+            let iter = iter - 1;
+            let first = first + 32;
+            let last = last + 32;
+        }
+        return;
+    }
+
+
 }
