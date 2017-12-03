@@ -7,32 +7,137 @@
  * A basic math library.
  */
 class Math {
+    static int exp2;
 
     /** Initializes the library. */
     function void init() {
+        let exp2 = Array.new(16);
+        let exp2[0] = 1;
+        let exp2[1] = 2;
+        let exp2[2] = 4;
+        let exp2[3] = 8;
+        let exp2[4] = 16;
+        let exp2[5] = 32;
+        let exp2[6] = 64;
+        let exp2[7] = 128;
+        let exp2[8] = 256;
+        let exp2[9] = 512;
+        let exp2[10] = 1024;
+        let exp2[11] = 2048;
+        let exp2[12] = 4096;
+        let exp2[13] = 8192;
+        let exp2[14] = 16384;
+        let exp2[15] = 16384+16384;
+        return;
+    }
+
+    function boolean bit(int x, int n) {
+        return ~((x & exp2[n]) = 0);
+    }
+
+    function int exp2_to(int power) {
+        return exp2[power];
     }
 
     /** Returns the absolute value of x. */
     function int abs(int x) {
+        if( x < 0 ) {
+            let x = -x;
+        }
+        return x;
     }
 
     /** Returns the product of x and y. */
     function int multiply(int x, int y) {
+        var int sum, convX;
+        var int j;
+
+        let sum = 0;
+        let convX = x;
+        let j = 0;
+        while( j < 16 ) {
+            if(Math.bit(y, j)) {
+                let sum = sum + convX;
+            }
+            let convX = convX + convX;
+            let j = j + 1;
+        }
+        return sum;
     }
 
     /** Returns the integer part of x/y. */
     function int divide(int x, int y) {
+        var int result, negX, negY, q;
+
+        let negX = x < 0;
+        let negY = y < 0;
+        let x = Math.abs(x);
+        let y = Math.abs(y);
+
+        if( y > x ) {
+            return 0;
+        }
+        let q = Math.divide(x, y+y);
+        if( x-(2*q*y) < y ) {
+            let result = q+q;
+        }
+        else {
+            let result = q+q+1;
+        }
+
+        if( negX = negY ) {
+            return result;
+        }
+        else {
+            return -result;
+        }
+    }
+
+    /** Returns the remainder part of x/y */
+    function int mod(int x, int y) {
+        // var int q;
+        //
+        // let q = Math.divide(x, y);
+        // return x - (q*y);
+        return x - (y * (x/y)); 
     }
 
     /** Returns the integer part of the square root of x. */
     function int sqrt(int x) {
+        var int j, y;
+        var int n;
+        var int nexp2;
+
+        let y = 0;
+        let j = 7;
+        while( ~(j < 0) ) {
+            let n = y + exp2[j];
+            let nexp2 = n * n;
+            if( ~(nexp2 > x) & (nexp2 > 0) ) {
+                let y = n;
+            }
+            let j = j - 1;
+        }
+        return y;
     }
 
     /** Returns the greater number. */
     function int max(int a, int b) {
+        if( a > b ) {
+            return a;
+        }
+        else {
+            return b;
+        }
     }
 
     /** Returns the smaller number. */
     function int min(int a, int b) {
+        if( a < b ) {
+            return a;
+        }
+        else {
+            return b;
+        }
     }
 }
